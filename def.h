@@ -147,7 +147,7 @@ private:
         free(ci);
     }
 
-    ContentInfo* loadContent(char * filename){
+    ContentInfo* loadContent(const char * filename){
         ContentInfo* ci=(ContentInfo*)malloc(sizeof(ContentInfo));
         if (read_file_content(filename, &ci ->content, &ci->size))
             return ci;
