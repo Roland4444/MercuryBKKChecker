@@ -1,9 +1,4 @@
-//
-// Created by roland on 2/28/19.
-//
 
-#ifndef CPPBLASTED_DEF_H
-#define CPPBLASTED_DEF_H
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -49,7 +44,7 @@ public:
     Session* sessions[2];
     BKKCheck v_check;
     BKKCheck i_check;
-    int checkFile(char * filename) {
+    int checkFile(const char* filename) {
         ContentInfo *ci = this->loadContent(filename);;
         if (ci == NULL)
             return -1;
@@ -88,7 +83,6 @@ public:
     }
 
     Checker(){
-
         this->handles[soundindex] = dlopen(soundso, RTLD_LAZY);
         this->handles[photoindex] = dlopen(photoso, RTLD_LAZY);
 
@@ -178,9 +172,6 @@ private:
         printf("Session creates succesfully\n\n");
         return sess;
     };
-
-
-
 };
 
-#endif //CPPBLASTED_DEF_H
+
