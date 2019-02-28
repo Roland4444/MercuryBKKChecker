@@ -63,25 +63,6 @@ public:
         }
     }
 
-    void foreach_(char * filename)
-    {
-        FILE* fp;
-        char buf[1024];
-        if ((fp = fopen(filename, "r")) == NULL)
-        {
-            perror("fopen source-file");
-            return;
-        }
-
-        while (fgets(buf, sizeof(buf), fp) != NULL)
-        {
-            buf[strlen(buf) - 1] = '\0'; // eat the newline fgets() stores
-            this->checkFile(buf);
-        }
-        fclose(fp);
-        return ;
-    }
-
     Checker(){
         this->handles[soundindex] = dlopen(soundso, RTLD_LAZY);
         this->handles[photoindex] = dlopen(photoso, RTLD_LAZY);
@@ -98,7 +79,6 @@ public:
 
         this->initSessions();
         this->loadcheckers();
-
     }
 
 private:
@@ -110,7 +90,6 @@ private:
             printf("error load i_check");
         if (!this->v_check)
             printf("error load v_check");
-
     }
 
     void initSessions()
@@ -143,8 +122,8 @@ private:
 
     void freeMem(ContentInfo* ci)
     {
-        free(ci->content);
-        free(ci);
+        delete(ci->content);
+        delete(ci);
     }
 
     ContentInfo* loadContent(const char * filename){
