@@ -7,6 +7,9 @@ void init(){
     GlobChecker = new Checker();
 }
 
+int summ(int a, int b){
+    return a+b;
+}
 int checkFile(char* filename){
     return GlobChecker->checkFile(filename);
 }
