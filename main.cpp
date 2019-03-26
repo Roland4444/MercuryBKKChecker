@@ -3,16 +3,24 @@ using namespace std;
 
 Checker* GlobChecker;
 
-void init(){
-    GlobChecker = new Checker();
+
+ 
+extern "C"{
+	int summ(int a, int b)
+	{
+    		return a+b;
+	}
+
+	void init(){
+    		GlobChecker = new Checker();
+	}
+
+	int checkFile(char* filename)
+	{
+    		return GlobChecker->checkFile(filename);
+	}
 }
 
-int summ(int a, int b){
-    return a+b;
-}
-int checkFile(char* filename){
-    return GlobChecker->checkFile(filename);
-}
 
 int main(int argc, char *argv[])
 {
