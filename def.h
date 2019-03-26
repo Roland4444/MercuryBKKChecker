@@ -12,30 +12,29 @@
 #define soundindex 0
 #define photoindex 1
 
-typedef struct
-{
+class Version{
+public:
     int major;
     int minor;
     int build;
-} Version;
+};
 
-typedef struct
-{
+class Session{
+public:
     Version version;
     char* id;
     void* payment;
     int last_error;
-} Session;
+};
 
-typedef struct
-{
+class ContentInfo{
+public:
     uint8_t* content;
     uint64_t size;
-}   ContentInfo;
+};
 
 typedef int (*create_session)(Session*  , char*);
 typedef int (*BKKCheck)(Session*,  uint8_t* , uint64_t);
-
 
 class Checker
 {
@@ -44,99 +43,99 @@ public:
     Session* sessions[2];
     BKKCheck v_check;
     BKKCheck i_check;
-    int checkFile(const char* filename) {
-        ContentInfo *ci = this->loadContent(filename);;
+
+    Checker()
+    {
+        initSo();
+        initSessions();
+        loadscheckers();
+    };
+
+    void freeMem(ContentInfo* ci)
+    {
+        delete(ci);
+    }
+
+    int checkFile(char* filename)
+    {
+        ContentInfo* ci = loadContent(filename);;
         if (ci == NULL)
             return -1;
 
-        if (strstr(filename, "wav") != NULL) {
+        if (strstr(filename, "wav")!=NULL){
             printf("CHECKING WAV FILE %s", filename);
-            if (!this->v_check(this->sessions[soundindex], ci->content, ci->size)) {
+            if (!v_check(sessions[soundindex], ci->content, ci->size))
+            {
                 freeMem(ci);
                 printf("Check failed!\n");
                 return -3;
-            } else {
+            }
+            else
+            {
                 printf("Checking passed\n");
                 freeMem(ci);
                 return 0;
             }
         }
-    }
-
-    Checker(){
-        this->handles[soundindex] = dlopen(soundso, RTLD_LAZY);
-        this->handles[photoindex] = dlopen(photoso, RTLD_LAZY);
-
-        if (!this->handles[soundindex])
-            printf("error loading sound so");
+        std::cout<<"CHECKING photo FILE "<< filename;
+        if (!i_check(sessions[photoindex], ci->content, ci->size))
+        {
+            printf("Check failed!\n");
+            freeMem(ci);
+            return -3;
+        }
         else
-            printf("Load success sound so");
-
-        if (!this->handles[photoindex])
-            printf("error loading photo so");
-        else
-            printf("Load success photo so");
-
-        this->initSessions();
-        this->loadcheckers();
+        {
+            printf("Checking passed\n");
+            freeMem(ci);
+            return 0;
+        }
     }
 
 private:
+    void initSo()
+    {
+        this->handles[soundindex] = dlopen(soundso, RTLD_LAZY);
+        this->handles[photoindex] = dlopen(photoso, RTLD_LAZY);
+        if (!handles[soundindex])
+            std::cout<<("error loading sound so");
+        else
+            std::cout<<("Load success sound so");
 
-    void loadcheckers(){
-        this->i_check = (BKKCheck)(dlsym(this->handles[photoindex],"i_check_format"));
-        this->v_check = (BKKCheck)(dlsym(this->handles[soundindex],"v_check"));
-        if (!this->i_check)
-            printf("error load i_check");
-        if (!this->v_check)
-            printf("error load v_check");
+        if (!handles[photoindex])
+            printf("error loading photo so");
+        else
+            printf("Load success photo so");
     }
 
     void initSessions()
     {
         this->sessions[photoindex]=this->initSession(this->handles[photoindex], "i_create_session", photoconfig);
         this->sessions[soundindex]=this->initSession(this->handles[soundindex], "v_create_session", soundconfig);
-        int i;
-        for (i=0;i<2; i++){
+        for (int i=0;i<2; i++){
             if (this->sessions[i]==NULL)
                 printf("Error create session #%d\n", i);
         }
     }
 
-    bool read_file_content(const char *file_path, uint8_t **content, size_t *content_size)
-    {
-        FILE* fd = fopen(file_path, "rb");
-        if (fd == NULL)
-        {
-            fprintf(stderr, "file \"%s\" not found\n", file_path);
-            return false;
-        }
-        fseek(fd, 0L, SEEK_END);
-        (*content_size) = (size_t) ftell(fd);
-        rewind(fd);
-        (*content) = (uint8_t*) calloc(1, (*content_size));
-        fread((*content), (*content_size), 1, fd);
-        fclose(fd);
-        return true;
-    };
+    void loadscheckers(){
+        this->i_check = (BKKCheck)(dlsym(this->handles[photoindex],"i_check_format"));
+        this->v_check = (BKKCheck)(dlsym(this->handles[soundindex],"v_check"));
+        if (!this->i_check)
+            std::cout<<("error load i_check");
+        if (!this->v_check)
+            std::cout<<("error load v_check");
 
-    void freeMem(ContentInfo* ci)
-    {
-        delete(ci->content);
-        delete(ci);
     }
 
-    ContentInfo* loadContent(const char * filename){
-        ContentInfo* ci=(ContentInfo*)malloc(sizeof(ContentInfo));
-        if (read_file_content(filename, &ci ->content, &ci->size))
-            return ci;
-        freeMem(ci);
-        return NULL;
-    };
-
+    ContentInfo * loadContent(char * filename){
+        ContentInfo * ci=new ContentInfo;
+        read_file_content(filename, &ci ->content, &ci->size);
+        return ci;
+    }
     Session* initSession(void* handle, char* symbol, char* config)
     {
-        Session* sess = (Session*)malloc(sizeof(Session));
+        Session* sess = new Session();
         create_session load = (create_session)(dlsym(handle, symbol));
         if (!load){
             printf("error loading %s\n\n\n", symbol );
@@ -150,7 +149,26 @@ private:
         }
         printf("Session creates succesfully\n\n");
         return sess;
-    };
+    }
+
+    bool read_file_content(const char *file_path, uint8_t **content, size_t *content_size) {
+        FILE *fd = fopen(file_path, "rb");
+        if (fd == NULL) {
+            fprintf(stderr, "file \"%s\" not found\n", file_path);
+            return false;
+        }
+        fseek(fd, 0L, SEEK_END);
+        (*content_size) = (size_t) ftell(fd);
+        rewind(fd);
+        (*content) = (uint8_t *) calloc(1, (*content_size));
+        fread((*content), (*content_size), 1, fd);
+        fclose(fd);
+        return true;
+    }
+
 };
+
+
+
 
 
